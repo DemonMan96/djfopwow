@@ -55,14 +55,12 @@ end
 -- Cash toplama
 local function collectCash()
     for _, obj in ipairs(workspace:GetDescendants()) do
-        if obj:IsA("MeshPart") and obj:FindFirstChildWhichIsA("ClickDetector") then
-            local cd = obj:FindFirstChildWhichIsA("ClickDetector")
-            if obj.Name:find("Cash1") or obj.Name:find("Cash2") or obj.Name:find("Cash3") then
-                if (obj.Position - hrp.Position).Magnitude <= 18 then
-                    repeat
-                        task.wait()
-                        fireclickdetector(cd)
-                    until not cd.Parent or (obj.Position - hrp.Position).Magnitude > 18
+        if obj:IsA("MeshPart") and (obj.Name == "Cash1" or obj.Name == "Cash2" or obj.Name == "Cash3") then
+            local clickDetector = obj:FindFirstChildWhichIsA("ClickDetector")
+            if clickDetector then
+                local dist = (hrp.Position - obj.Position).Magnitude
+                if dist <= 18 then
+                    fireclickdetector(clickDetector)
                 end
             end
         end

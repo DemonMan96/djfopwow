@@ -1,8 +1,17 @@
--- Autofarm Kasa Scripti (düzeltilmiş)
+-- Autofarm Kasa Scripti (kırmızı kasa filtresi ile)
 local player = game.Players.LocalPlayer
 local char = player.Character or player.CharacterAdded:Wait()
 local hrp = char:WaitForChild("HumanoidRootPart")
 local tweenService = game:GetService("TweenService")
+
+-- Prompt’tan kasanın gerçek Part’ını bul
+local function getPromptPart(prompt)
+    local parent = prompt.Parent
+    while parent and not parent:IsA("BasePart") do
+        parent = parent.Parent
+    end
+    return parent
+end
 
 -- Tween ile hareket
 local function tweenTo(pos)
@@ -21,17 +30,19 @@ local function getNearestPrompt()
 
     for _, obj in ipairs(kasalar:GetDescendants()) do
         if obj:IsA("ProximityPrompt") and obj.Enabled and obj.MaxActivationDistance > 0 then
-            local kasaPart = obj.Parent
-            local kasaPos
+            local kasaPart = getPromptPart(obj)
 
-            if kasaPart:IsA("BasePart") then
-                kasaPos = kasaPart.Position
-            elseif kasaPart:IsA("Model") and kasaPart.PrimaryPart then
-                kasaPos = kasaPart.PrimaryPart.Position
-            end
+            if kasaPart then
+                -- Kasanın içindeki "Part" isimli parçayı bul
+                local kasaModel = kasaPart.Parent
+                local innerPart = kasaModel:FindFirstChild("Part")
 
-            if kasaPos then
-                local dist = (hrp.Position - kasaPos).Magnitude
+                -- Eğer "Part" varsa ve kırmızıysa bu kasayı atla
+                if innerPart and innerPart:IsA("BasePart") and innerPart.Color == Color3.fromRGB(255,0,0) then
+                    continue
+                end
+
+                local dist = (hrp.Position - kasaPart.Position).Magnitude
                 if dist <= obj.MaxActivationDistance then
                     if not nearestDist or dist < nearestDist then
                         nearestDist = dist
@@ -63,20 +74,12 @@ end
 while task.wait(1) do
     local prompt = getNearestPrompt()
     if prompt then
-        local kasaPart = prompt.Parent
-        local targetPos
-
-        if kasaPart:IsA("BasePart") then
-            targetPos = kasaPart.Position
-        elseif kasaPart:IsA("Model") and kasaPart.PrimaryPart then
-            targetPos = kasaPart.PrimaryPart.Position
-        end
-
-        if targetPos then
-            tweenTo(targetPos + Vector3.new(0, 0, 0)) -- kasanın biraz üstüne git
+        local kasaPart = getPromptPart(prompt)
+        if kasaPart then
+            tweenTo(kasaPart.Position + Vector3.new(0, 0, 0))
             task.wait(0.5)
             fireproximityprompt(prompt)
-            task.wait(0.5) -- cash düşmesi için bekle
+            task.wait(2)
             collectCash()
         end
     end

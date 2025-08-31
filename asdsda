@@ -1,4 +1,4 @@
--- Autofarm Kasa Scripti (kırmızı kasa filtresi ile)
+-- Autofarm Kasa Scripti (eski mantık + kırmızı filtre)
 local player = game.Players.LocalPlayer
 local char = player.Character or player.CharacterAdded:Wait()
 local hrp = char:WaitForChild("HumanoidRootPart")
@@ -16,38 +16,35 @@ end
 -- Tween ile hareket
 local function tweenTo(pos)
     local dist = (hrp.Position - pos).Magnitude
-    local time = math.clamp(dist / 25, 0.5, 5) -- uzaklığa göre hız ayarı
+    local time = math.clamp(dist / 25, 0.5, 5) -- mesafeye göre hız
     local tween = tweenService:Create(hrp, TweenInfo.new(time, Enum.EasingStyle.Linear), {CFrame = CFrame.new(pos)})
     tween:Play()
     tween.Completed:Wait()
 end
 
--- En yakın kullanılabilir kasa promptunu bulma
+-- En yakın kasanın promptunu bul (kırmızı olanları atla)
 local function getNearestPrompt()
     local nearestPrompt, nearestDist
     local kasalar = workspace:FindFirstChild("Kasalar")
     if not kasalar then return nil end
 
     for _, obj in ipairs(kasalar:GetDescendants()) do
-        if obj:IsA("ProximityPrompt") and obj.Enabled and obj.MaxActivationDistance > 0 then
+        if obj:IsA("ProximityPrompt") then
             local kasaPart = getPromptPart(obj)
-
             if kasaPart then
-                -- Kasanın içindeki "Part" isimli parçayı bul
+                -- Kasanın içindeki "Part" kontrolü
                 local kasaModel = kasaPart.Parent
                 local innerPart = kasaModel:FindFirstChild("Part")
 
-                -- Eğer "Part" varsa ve kırmızıysa bu kasayı atla
+                -- Eğer Part kırmızıysa kasayı atla
                 if innerPart and innerPart:IsA("BasePart") and innerPart.Color == Color3.fromRGB(255,0,0) then
                     continue
                 end
 
                 local dist = (hrp.Position - kasaPart.Position).Magnitude
-                if dist <= obj.MaxActivationDistance then
-                    if not nearestDist or dist < nearestDist then
-                        nearestDist = dist
-                        nearestPrompt = obj
-                    end
+                if not nearestDist or dist < nearestDist then
+                    nearestDist = dist
+                    nearestPrompt = obj
                 end
             end
         end
@@ -76,10 +73,10 @@ while task.wait(1) do
     if prompt then
         local kasaPart = getPromptPart(prompt)
         if kasaPart then
-            tweenTo(kasaPart.Position + Vector3.new(0, 0, 0))
+            tweenTo(kasaPart.Position + Vector3.new(0, 0, 0)) -- kasanın biraz üstüne git
             task.wait(0.5)
-            fireproximityprompt(prompt)
-            task.wait(2)
+            fireproximityprompt(prompt) -- UI’ye bakmadan tetikle
+            task.wait(2) -- cash spawn için bekle
             collectCash()
         end
     end

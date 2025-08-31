@@ -68,7 +68,7 @@ while task.wait(1) do
         end
 
         if targetPos then
-            tweenTo(targetPos + Vector3.new(0, 5, 0)) -- biraz yukarıdan git
+            tweenTo(targetPos + Vector3.new(0, 0, 0)) -- biraz yukarıdan git
             task.wait(0.5)
             fireproximityprompt(prompt)
             task.wait(2) -- cash spawn için bekle

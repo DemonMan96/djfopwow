@@ -54,20 +54,21 @@ end
 
 -- Cash toplama
 local function collectCash()
-		for i, v in pairs(game:GetService("Workspace"):GetDescendants()) do
-			if v:IsA("ClickDetector") and v.Parent and (v.Parent.Name:find("Cash1") or v.Parent.Name:find("Cash2") or v.Parent.Name:find("Cash3")) then
-				local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:wait()
-				local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-				if (v.Parent.Position - HumanoidRootPart.Position).Magnitude <= 18 then
-					repeat
-						wait()
-						fireclickdetector(v)
-					until not v or not v.Parent
-				end
-			end
-		end
-
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("MeshPart") and obj:FindFirstChildWhichIsA("ClickDetector") then
+            local cd = obj:FindFirstChildWhichIsA("ClickDetector")
+            if obj.Name:find("Cash1") or obj.Name:find("Cash2") or obj.Name:find("Cash3") then
+                if (obj.Position - hrp.Position).Magnitude <= 18 then
+                    repeat
+                        task.wait()
+                        fireclickdetector(cd)
+                    until not cd.Parent or (obj.Position - hrp.Position).Magnitude > 18
+                end
+            end
+        end
+    end
 end
+
 
 for i, v in pairs(workspace:GetDescendants()) do
 	if v:IsA("Seat") then

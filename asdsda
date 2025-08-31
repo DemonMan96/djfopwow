@@ -85,7 +85,6 @@ while task.wait(1) do
             task.wait(0.5)
             fireproximityprompt(prompt) -- UI’ye bakmadan tetikle
             task.wait(2) -- cash spawn için bekle
-            collectCash()
         end
     end
 end

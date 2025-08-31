@@ -84,7 +84,7 @@ while task.wait(1) do
             tweenTo(kasaPart.Position + Vector3.new(0, 0, 0)) -- kasanın biraz üstüne git
             task.wait(0.5)
             fireproximityprompt(prompt) -- UI’ye bakmadan tetikle
-            task.wait(2) -- cash spawn için bekle
+            task.wait(6) -- cash spawn için bekle
         end
     end
 end

@@ -1,0 +1,61 @@
+-- Autofarm Kasa Scripti
+local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+local tweenService = game:GetService("TweenService")
+
+-- Tween ile hareket
+local function tweenTo(pos)
+    local tween = tweenService:Create(hrp, TweenInfo.new(2, Enum.EasingStyle.Linear), {CFrame = CFrame.new(pos)})
+    tween:Play()
+    tween.Completed:Wait()
+end
+
+-- En yakın kasayı bulma
+local function getNearestKasa()
+    local nearestPrompt, nearestDist
+    for _, obj in ipairs(game:FindFirstChild("Ugc"):FindFirstChild("Workspace"):FindFirstChild("Kasalar"):GetDescendants()) do
+        if obj:IsA("ProximityPrompt") and obj.Enabled then
+            local kasa = obj.Parent
+            if kasa and kasa:IsA("Model") or kasa:IsA("Part") then
+                local dist = (hrp.Position - kasa.Position).Magnitude
+                if not nearestDist or dist < nearestDist then
+                    nearestDist = dist
+                    nearestPrompt = obj
+                end
+            end
+        end
+    end
+    return nearestPrompt
+end
+
+-- Cash toplama
+local function collectCash()
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("MeshPart") and (obj.Name == "Cash1" or obj.Name == "Cash2" or obj.Name == "Cash3") then
+            local clickDetector = obj:FindFirstChildWhichIsA("ClickDetector")
+            if clickDetector then
+                local dist = (hrp.Position - obj.Position).Magnitude
+                if dist <= 18 then
+                    fireclickdetector(clickDetector)
+                end
+            end
+        end
+    end
+end
+
+-- Ana loop
+while task.wait(1) do
+    local prompt = getNearestKasa()
+    if prompt then
+        local kasa = prompt.Parent
+        -- Tween kasaya
+        tweenTo(kasa.Position + Vector3.new(0, 5, 0)) -- biraz yukarıda durması için
+        task.wait(0.5)
+        -- Promptu tetikle
+        fireproximityprompt(prompt)
+        -- Cash topla
+        task.wait(2) -- Cash spawn olması için biraz bekle
+        collectCash()
+    end
+end

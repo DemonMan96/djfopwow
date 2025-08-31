@@ -14,7 +14,7 @@ end
 -- En yakın kasayı bulma
 local function getNearestKasa()
     local nearestPrompt, nearestDist
-    for _, obj in ipairs(game:FindFirstChild("Ugc"):FindFirstChild("Workspace"):FindFirstChild("Kasalar"):GetDescendants()) do
+    for _, obj in ipairs(game:FindFirstChild("Workspace"):FindFirstChild("Kasalar"):GetDescendants()) do
         if obj:IsA("ProximityPrompt") and obj.Enabled then
             local kasa = obj.Parent
             if kasa and kasa:IsA("Model") or kasa:IsA("Part") then

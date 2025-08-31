@@ -11,14 +11,24 @@ local function tweenTo(pos)
     tween.Completed:Wait()
 end
 
--- En yakın kasayı bulma
-local function getNearestKasa()
+-- En yakın enabled kasa (ProximityPrompt) bulma
+local function getNearestPrompt()
     local nearestPrompt, nearestDist
-    for _, obj in ipairs(game:FindFirstChild("Workspace"):FindFirstChild("Kasalar"):GetDescendants()) do
+    local kasalar = workspace:FindFirstChild("Kasalar")
+    if not kasalar then return nil end
+
+    for _, obj in ipairs(kasalar:GetDescendants()) do
         if obj:IsA("ProximityPrompt") and obj.Enabled then
-            local kasa = obj.Parent
-            if kasa and kasa:IsA("Model") or kasa:IsA("Part") then
-                local dist = (hrp.Position - kasa.Position).Magnitude
+            local kasaPart = obj.Parent
+            if kasaPart and kasaPart:IsA("BasePart") then
+                local dist = (hrp.Position - kasaPart.Position).Magnitude
+                if not nearestDist or dist < nearestDist then
+                    nearestDist = dist
+                    nearestPrompt = obj
+                end
+            elseif kasaPart and kasaPart:IsA("Model") and kasaPart.PrimaryPart then
+                -- Eğer kasa Model ise PrimaryPart üzerinden pozisyon al
+                local dist = (hrp.Position - kasaPart.PrimaryPart.Position).Magnitude
                 if not nearestDist or dist < nearestDist then
                     nearestDist = dist
                     nearestPrompt = obj
@@ -46,16 +56,23 @@ end
 
 -- Ana loop
 while task.wait(1) do
-    local prompt = getNearestKasa()
+    local prompt = getNearestPrompt()
     if prompt then
-        local kasa = prompt.Parent
-        -- Tween kasaya
-        tweenTo(kasa.Position + Vector3.new(0, 5, 0)) -- biraz yukarıda durması için
-        task.wait(0.5)
-        -- Promptu tetikle
-        fireproximityprompt(prompt)
-        -- Cash topla
-        task.wait(2) -- Cash spawn olması için biraz bekle
-        collectCash()
+        local kasaPart = prompt.Parent
+        local targetPos
+
+        if kasaPart:IsA("BasePart") then
+            targetPos = kasaPart.Position
+        elseif kasaPart:IsA("Model") and kasaPart.PrimaryPart then
+            targetPos = kasaPart.PrimaryPart.Position
+        end
+
+        if targetPos then
+            tweenTo(targetPos + Vector3.new(0, 5, 0)) -- biraz yukarıdan git
+            task.wait(0.5)
+            fireproximityprompt(prompt)
+            task.wait(2) -- cash spawn için bekle
+            collectCash()
+        end
     end
 end

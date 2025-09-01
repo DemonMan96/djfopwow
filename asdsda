@@ -3,28 +3,18 @@ local char = player.Character or player.CharacterAdded:Wait()
 local hrp = char:WaitForChild("HumanoidRootPart")
 local tweenService = game:GetService("TweenService")
 
--- Blacklist & Bug sistemi
-local blacklisted = {}
-local bugCount = 0
 local escapePoint = CFrame.new(21.29, 137.60, 466.10)
 
--- === Yardımcı Fonksiyonlar ===
-
-local function isBlacklisted(kasa)
-	return blacklisted[kasa] and tick() - blacklisted[kasa] < 60
+-- Prompt’tan kasanın gerçek Part’ını bul
+local function getPromptPart(prompt)
+	local parent = prompt.Parent
+	while parent and not parent:IsA("BasePart") do
+		parent = parent.Parent
+	end
+	return parent
 end
 
-local function goEscape()
-	print("Çok fazla buglu kasa bulundu, EscapePoint'e gidiliyor...")
-	local tweenInfo = TweenInfo.new(3, Enum.EasingStyle.Linear)
-	local goal = {CFrame = escapePoint}
-	local tween = tweenService:Create(hrp, tweenInfo, goal)
-	tween:Play()
-	tween.Completed:Wait()
-	task.wait(10) -- bekleme süresi
-	bugCount = 0 -- resetle
-end
-
+-- Tween ile hareket
 local function tweenTo(target)
 	if not target then return end
 	local tweenInfo = TweenInfo.new(3, Enum.EasingStyle.Linear)
@@ -34,52 +24,61 @@ local function tweenTo(target)
 	tween.Completed:Wait()
 end
 
+-- En yakın kasanın promptunu bulma
+local function getNearestPrompt()
+	local nearestPrompt, nearestDist
+	local kasalar = workspace:FindFirstChild("Kasalar")
+	if not kasalar then return nil end
 
--- Kasa soyma denemesi
-local function tryRob(kasa)
-	if not kasa or not kasa:IsA("Model") then return end
-	if isBlacklisted(kasa) then return end
-
-	local part = kasa:FindFirstChild("Part")
-	if part and part:IsA("BasePart") and part.Color == Color3.fromRGB(255,0,0) then
-		-- Kırmızı kasa, direkt geç
-		return
-	end
-
-	local start = tick()
-	local success = false
-
-	tweenTo(kasa:FindFirstChildWhichIsA("BasePart"))
-
-	-- 6 saniye deneme süresi
-	while tick() - start < 6 do
-		local p = kasa:FindFirstChild("Part")
-		if p and p:IsA("BasePart") and p.Color ~= Color3.fromRGB(255,0,0) then
-			success = true
-			break
+	for _, obj in ipairs(kasalar:GetDescendants()) do
+		if obj:IsA("ProximityPrompt") then
+			local kasaPart = getPromptPart(obj)
+			if kasaPart then
+				local innerPart = kasaPart.Parent:FindFirstChild("Part")
+				if innerPart and innerPart:IsA("BasePart") and innerPart.Color == Color3.fromRGB(255,0,0) then
+					continue -- kırmızıysa atla
+				end
+				local dist = (hrp.Position - kasaPart.Position).Magnitude
+				if not nearestDist or dist < nearestDist then
+					nearestDist = dist
+					nearestPrompt = obj
+				end
+			end
 		end
-		task.wait()
 	end
+	return nearestPrompt
+end
 
-	if not success then
-		print("Buglu kasa atlandı:", kasa.Name)
-		blacklisted[kasa] = tick()
-		bugCount += 1
-		if bugCount >= 3 then
-			goEscape()
-		end
+-- EscapePoint tween fonksiyonu
+local function tweenToEscape()
+	if (hrp.Position - escapePoint.Position).Magnitude > 30 then
+		local tweenInfo = TweenInfo.new(3, Enum.EasingStyle.Linear)
+		local goal = {CFrame = escapePoint}
+		local tween = tweenService:Create(hrp, tweenInfo, goal)
+		tween:Play()
+		tween.Completed:Wait()
 	end
 end
 
--- === ANA LOOP ===
+-- Ana loop
+spawn(function()
+	while task.wait(20) do
+		tweenToEscape()
+	end
+end)
+
 while task.wait(1) do
 	-- Önce paraları topla
 
-
-	-- Sonra kasaları dene
-	for _, kasa in pairs(workspace:GetDescendants()) do
-		if kasa:IsA("Model") and kasa:FindFirstChild("Part") then
-			tryRob(kasa)
+	-- Sonra kasalara git
+	local prompt = getNearestPrompt()
+	if prompt then
+		local kasaPart = getPromptPart(prompt)
+		if kasaPart then
+			tweenTo(kasaPart)
+			task.wait(0.5)
+			fireproximityprompt(prompt)
+			task.wait(2)
 		end
 	end
 task.wait(3)

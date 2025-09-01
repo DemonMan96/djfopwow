@@ -1,4 +1,4 @@
--- Autofarm Kasa Scripti (eski mantık + kırmızı filtre)
+-- Autofarm Kasa + Para Toplama Scripti
 local player = game.Players.LocalPlayer
 local char = player.Character or player.CharacterAdded:Wait()
 local hrp = char:WaitForChild("HumanoidRootPart")
@@ -52,42 +52,50 @@ local function getNearestPrompt()
     return nearestPrompt
 end
 
--- Cash toplama
+-- Para toplama (ClickDetector fixli)
 local function collectCash()
-    for _, obj in ipairs(workspace:GetDescendants()) do
-        if obj:IsA("MeshPart") and (obj.Name == "Cash1" or obj.Name == "Cash2" or obj.Name == "Cash3") then
-            local clickDetector = obj:FindFirstChildWhichIsA("ClickDetector")
-            if clickDetector then
-                local dist = (hrp.Position - obj.Position).Magnitude
-                if dist <= 18 then
-                    fireclickdetector(clickDetector)
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("ClickDetector") 
+            and v.Parent 
+            and (v.Parent.Name:find("Cash1") or v.Parent.Name:find("Cash2") or v.Parent.Name:find("Cash3")) then
+            
+            local dist = (hrp.Position - v.Parent.Position).Magnitude
+            if dist <= 18 then
+                while v.Parent and v.Parent:IsDescendantOf(workspace) do
+                    fireclickdetector(v)
+                    task.wait()
                 end
             end
         end
     end
 end
 
-
-for i, v in pairs(workspace:GetDescendants()) do
+-- Gereksiz seatleri sil
+for _, v in pairs(workspace:GetDescendants()) do
 	if v:IsA("Seat") then
 		v:Destroy()
 	end
 end
 
--- Ana loop
-while task.wait(1) do
-    local prompt = getNearestPrompt()
-    if prompt then
-        local kasaPart = getPromptPart(prompt)
-        if kasaPart then
-            tweenTo(kasaPart.Position + Vector3.new(0, 0, 0)) -- kasanın biraz üstüne git
-            task.wait(0.5)
-            fireproximityprompt(prompt) -- UI’ye bakmadan tetikle
-            task.wait(6) -- cash spawn için bekle
+-- Ana loop: kasalara git
+task.spawn(function()
+    while task.wait(1) do
+        local prompt = getNearestPrompt()
+        if prompt then
+            local kasaPart = getPromptPart(prompt)
+            if kasaPart then
+                tweenTo(kasaPart.Position) -- kasanın üstüne git
+                task.wait(0.5)
+                fireproximityprompt(prompt) -- kasa aç
+                task.wait(6) -- cash spawn bekle
+            end
         end
     end
-end
+end)
 
-while wait() do
-    collectCash()
-end
+-- Para toplama loop
+task.spawn(function()
+    while task.wait() do
+        collectCash()
+    end
+end)

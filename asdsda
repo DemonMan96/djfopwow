@@ -78,7 +78,7 @@ while task.wait(1) do
 			tweenTo(kasaPart)
 			task.wait(0.5)
 			fireproximityprompt(prompt)
-			task.wait(2)
+			task.wait(1.5)
 		end
 	end
 task.wait(3)

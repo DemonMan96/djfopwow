@@ -15,13 +15,12 @@ local function getPromptPart(prompt)
 end
 
 -- Tween ile hareket
-local function tweenTo(target)
-	if not target then return end
-	local tweenInfo = TweenInfo.new(3, Enum.EasingStyle.Linear)
-	local goal = {CFrame = target.CFrame + Vector3.new(0, 0, 0)}
-	local tween = tweenService:Create(hrp, tweenInfo, goal)
-	tween:Play()
-	tween.Completed:Wait()
+local function tweenTo(pos)
+    local dist = (hrp.Position - pos).Magnitude
+    local time = math.clamp(dist / 25, 0.5, 7) -- mesafeye göre hız
+    local tween = tweenService:Create(hrp, TweenInfo.new(time, Enum.EasingStyle.Linear), {CFrame = CFrame.new(pos)})
+    tween:Play()
+    tween.Completed:Wait()
 end
 
 -- En yakın kasanın promptunu bulma
